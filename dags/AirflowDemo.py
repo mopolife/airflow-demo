@@ -16,7 +16,6 @@ from airflow.hooks.postgres_hook import PostgresHook
 
 ## APi key to connect to weather api
 ## Alternatively store them in files and source
-#API_KEY="8f65cb7f2a4c2a3173ffe37ae2254c4a"
 API_KEY=Variable.get("weather_api_key")
 
 # Following are defaults which can be overridden later on
@@ -40,7 +39,6 @@ def my_sleeping_function(random_base):
 
 # Function which calls get weather api and downloads data to data directory
 def get_weather(**kwargs):
-    # https://api.openweathermap.org/data/2.5/weather?q=Brooklyn,USA&appid=8f65cb7f2a4c2a3173ffe37ae2254c4a
     parameters = {'q': 'California,USA', 'appid': API_KEY}
     result = requests.get("https://api.openweathermap.org/data/2.5/weather?", parameters)
     if result.status_code == 200:
@@ -64,14 +62,14 @@ def Write_To_S3(**kwargs):
     for bucket in s3.buckets.all():
         print(bucket.name)
     file_name = str(datetime.now().date()) + '.json'
-    s3.Bucket("airflow-demo-bucket").upload_file("/usr/local/airflow/dags/" + file_name, "out_file.json")
+    s3.Bucket("airflow-demo-bucket").upload_file("/usr/local/airflow/dags/data/" + file_name, "out_file.json")
     ## Alternatively use s3 hooks to do this operation
     #hook = airflow.hooks.S3_hook.S3Hook('my_S3_conn')
-    #hook.load_file("/usr/local/airflow/dags/" + file_name, "out_file.json", "airflow-demo-bucket")
+    #hook.load_file("/usr/local/airflow/dags/data/2020-11-08.json", "out_file.json", "airflow-demo-bucket")
 
 
 def ConnectToDB(**kwargs):
-    curr_dt = datetime.now().date()
+    curr_dt = str(datetime.now().date())
     pg_hook = PostgresHook(postgres_conn_id='postgres_default')
     dts_insert = 'insert into public.load_status (job_name, description) values (%s, %s)'
     pg_hook.run(dts_insert, parameters=("Temp_load", curr_dt))
